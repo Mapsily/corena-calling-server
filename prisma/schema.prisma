@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(uuid()) @db.Uuid
+  name         String
+  email        String        @unique
+  clerkId      String        @unique
+  phoneNumber  String?
+  companyName  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  products     Product[]
+  prospects    Prospect[]
+  setting      Setting?
+  subscription Subscription?
+}
+
+model Prospect {
+  id               String           @id @default(uuid())
+  name             String
+  phone            String
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  userId           String           @db.Uuid
+  lastContacted    DateTime?
+  rescheduledCount Int?             @default(0)
+  rescheduledFor   DateTime?
+  status           PROSPECT_STATUS? @default(INITIAL)
+  appointments     Appointment[]
+  conversations    Conversation[]
+  user             User             @relation(fields: [userId], references: [id])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   @db.Uuid
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model Appointment {
+  id               String         @id @default(uuid())
+  scheduledFor     DateTime
+  productsInterest String[]
+  interestLevel    INTEREST_LEVEL @default(LOW)
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  prospectId       String
+  prospect         Prospect       @relation(fields: [prospectId], references: [id])
+}
+
+model Conversation {
+  id          String              @id @default(uuid())
+  transcript  String
+  callStartAt DateTime
+  callEndAt   DateTime
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  notes       String
+  result      CONVERSATION_RESULT
+  status      CONVERSATION_STATUS @default(INPROGRESS)
+  prospectId  String
+  prospect    Prospect            @relation(fields: [prospectId], references: [id])
+}
+
+model Subscription {
+  id           String      @id @default(uuid())
+  userId       String      @unique @db.Uuid
+  user         User        @relation(fields: [userId], references: [id])
+  plan         Plan        @relation(fields: [planId], references: [id])
+  planId       String
+  minutesLeft  Int         @default(0)
+  expiresAt    DateTime
+  autoRenew    Boolean     @default(false)
+  status       PLAN_STATUS
+  dailyUsed    Int         @default(0)
+  lastUsedDate DateTime    @default(now())
+}
+
+model Plan {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  price        Float
+  minutes      Int
+  duration     Int // in days
+  perDay       Int
+  autoRenew    Boolean
+  Subscription Subscription[]
+}
+
+model Setting {
+  id              String           @id @default(uuid()) @db.Uuid
+  theme           THEME            @default(LIGHT)
+  updatedAt       DateTime         @updatedAt
+  advancedSetting AdvancedSetting?
+  agentSetting    AgentSetting?
+  scriptSetting   ScriptSetting?
+  userId          String           @unique @db.Uuid
+  user            User             @relation(fields: [userId], references: [id])
+}
+
+model AgentSetting {
+  id            String   @id @default(uuid())
+  settingId     String   @unique @db.Uuid
+  language      String
+  firstMessage  String
+  knowledgeBase String
+  voice         String
+  updatedAt     DateTime @updatedAt
+  setting       Setting  @relation(fields: [settingId], references: [id])
+}
+
+model ScriptSetting {
+  id        String   @id @default(uuid())
+  settingId String   @unique @db.Uuid
+  initial   String
+  followUp  String
+  updatedAt DateTime @updatedAt
+  setting   Setting  @relation(fields: [settingId], references: [id])
+}
+
+model AdvancedSetting {
+  id                      String   @id @default(uuid())
+  settingId               String   @unique @db.Uuid
+  maxConversationDuration String   @default("300s")
+  keywords                String[]
+  timeZone                String
+  startAt                 DateTime @db.Timestamp(0)
+  endAt                   DateTime @db.Timestamp(0)
+  updatedAt               DateTime @updatedAt
+  setting                 Setting  @relation(fields: [settingId], references: [id])
+}
+
+enum PLAN_STATUS {
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum CONVERSATION_RESULT {
+  PASSED
+  FAILED
+  RESCHEDULED
+  NOTRESPONDED
+}
+
+enum CONVERSATION_STATUS {
+  INPROGRESS
+  COMPLETED
+}
+
+enum PROSPECT_STATUS {
+  INITIAL
+  RESCHEDULED
+  BOOKED
+  NOTINTERESTED
+  NOTRESPONDED
+  FAILED
+}
+
+enum INTEREST_LEVEL {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum THEME {
+  LIGHT
+  DARK
+}

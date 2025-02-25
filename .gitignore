@@ -1,0 +1,52 @@
+# Node.js and npm
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+
+# TypeScript build output
+dist/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Environment variables
+.env
+!.env.example
+
+# Prisma generated files
+prisma/generated/
+
+# Docker
+Dockerfile.*
+docker-compose.override.yml
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor-specific files
+.vscode/
+.idea/
+*.sublime-*
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
+# Coverage and test reports
+coverage/
+*.lcov
+
+# Local database data (if applicable)
+*.db
+*.sqlite
+
+# Miscellaneous
+*.seed
+*.pid
+*.gz
